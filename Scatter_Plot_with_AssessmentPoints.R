@@ -9,12 +9,13 @@
 # are multiple data points on a given date, and plots the location of any data flags.
 
 ## Install required libraries
-install.packages("jsonlite", repos="http://cran.r-project.org")
+#install.packages("jsonlite", repos="http://cran.r-project.org")
 
 ## Load libraries
 library(jsonlite)    # For data services
 library(ggplot2)     # For scatter plot with overlay
 
+## DATA QUERY SECTION ###
 ## Call data services and generate data frame
 # Root URL of data services:
 targetURL <- paste0( "http://irmadevservices.nps.gov/WaterQualityDataServices/OData/Data?" );
@@ -43,7 +44,8 @@ assessURL <- paste0(assessURL, "&$filter=SiteCode eq 'MORR_SC00' and Characteris
 assessURL = gsub(" ", "%20", assessURL)
 print (assessURL)
 
-# Create object data frames (plotdf and assessdf) that contains the requested data
+### DATA FRAME SECTION ###
+# Create data frames (plotdf and assessdf) that contains the requested data
 # The second element contains the data required for the plot. (The first contains the URL used.)
 plotdf <- try(fromJSON(targetURL, flatten = TRUE))[[ 2 ]]
 if (inherits(plotdf,'try-error')) {
@@ -75,6 +77,7 @@ if(is.na(assessdf$UpperAssessmentPoint)) {
 } 
 assessBounds <- c(assessdf$LowerAssessmentPoint,upperPoint)
 
+### PLOT/GRAPH GENERATION SECTION ###
 ## Begin scatter plot using gglot
 thisPlot <- ggplot( 
   data = plotdf, 

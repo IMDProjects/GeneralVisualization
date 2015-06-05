@@ -31,6 +31,7 @@ MaxDepth <- 0.9
 # Grouping option for multiple data points within a day: None, Median, Average
 GroupingOption <- "Median"
 
+## DATA QUERY SECTION ###
 ## Call data services and generate data frame
 # Use a series of strings (S1-S4) to make this easier to follow, then concatenate
 # Note that %20 is the html code for a space (" ")
@@ -48,6 +49,7 @@ targetURL = paste0(S1,S2,S3,S4)
 # Encode the URL by replacing spaces with %20
 targetURL = gsub(" ", "%20", targetURL)
 
+### DATA FRAME SECTION ###
 # Create object data frame (plotdf) that contains the requested data
 # The second element (myResult[[2]]) contains the data required for the plot. (The first contains the URL used.)
 myResult <- try(fromJSON(targetURL, flatten = TRUE))
@@ -116,6 +118,7 @@ if (inherits(myResult,'try-error')) {
   UnitLab <- plotdf[1,"Units"]
   ParkName <- plotdf[1,"Park"]
   
+  ### PLOT/GRAPH GENERATION SECTION ###
   ## Begin Box plot with scatter overlay 
   # Set x and y axis limits
   xmin <- 0.5
