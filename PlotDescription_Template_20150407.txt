@@ -1,0 +1,15 @@
+NPS Inventory and Monitoring Visualization Package
+PlotDescription_Template.txt
+----------------------------------------------------------------------
+
+Plot Description: text description of plot content with summary detail 
+				on scientific and statistical attributes (enough to 
+				enable a user to understand the concept being portrayed)
+
+Data Store Links: links to a Collection containing the SOPs for data collection,
+					processing, and QA/QC, and other relevant citations
+				or, links to individual reference profiles for the same
+
+Other/External Links: (as needed)
+
+----------------------------------------------------------------------

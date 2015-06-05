@@ -1,0 +1,15 @@
+NPS Inventory and Monitoring Visualization Package
+PlotSpecifications_Template.txt
+----------------------------------------------------------------------
+
+R Libraries: <comma delimited list of libraries used>
+
+Variables: <comma delimited list of selection variables used - in same order as used in script>
+	Example: <NetworkCode>,<ParkCode>,<SiteName>,<CharacterName>,<StartDate>,<EndDate>
+
+Legend/Caption for Graphic: (if not included in the R script; indicate if plot includes
+					provisional data)	
+
+Optional - Shiny operations: if a Shiny app is needed, summarize interactive items
+
+----------------------------------------------------------------------
