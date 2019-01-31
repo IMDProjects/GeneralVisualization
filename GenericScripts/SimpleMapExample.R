@@ -31,6 +31,8 @@ connString <- paste0("driver={SQL Server};server=",dbInstance,";database=",dbNam
 unitSQL <- "select distinct UnitCode from dbo.Station order by UnitCode"
 stationSnippet <- "select distinct SiteNumber, StationName, Longitude_dd, Latitude_dd, UnitCode from dbo.Station order by UnitCode, StationName"
 
+tileURL <- 'http://api.mapbox.com/v4/nps.397cfb9a,nps.3cf3d4ab,nps.b0add3e6/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibnBzIiwiYSI6IkdfeS1OY1UifQ.K8Qn5ojTw4RV1GwBlsci-Q&secure=1'
+
 defaultMarker <- makeAwesomeIcon(
   icon = 'map-pin',
   library = 'fa',
@@ -46,10 +48,11 @@ unitCodes <- sqlQuery(dbConn, unitSQL)
 stationInfo <- sqlQuery(dbConn, stationSnippet)
 
 # Filter stations for selected park
-parkCode <- "CHAT"
+parkCode <- "GRTE"
 parkStations <- stationInfo[which(stationInfo$UnitCode == parkCode), ]
 
-# Use the mapbox Javasript library (via the htmltools plugin capability)
+# Set up the NPS ParkTiles basemap
+# Use the mapbox Javascript library (via the htmltools plugin capability)
 # NPS has an access token for the ParkTiles tileset
 # Plugin registration code (example from https://gist.github.com/jcheng5/c084a59717f18e947a17955007dc5f92)
 mbPlugin <- htmlDependency("mapbox", "3.1.1",
@@ -59,15 +62,18 @@ mbPlugin <- htmlDependency("mapbox", "3.1.1",
                              stylesheet = "https://api.mapbox.com/mapbox.js/v3.1.1/mapbox.css"
 )
 
-# A function that takes a plugin htmlDependency object and adds
-# it to the map. This ensures that however or whenever the map
+# Add the htmlDependency plugin object to the map. 
+# This ensures that however or whenever the map
 # gets rendered, the plugin will be loaded into the browser.
 registerPlugin <- function(map, plugin) {
   map$dependencies <- c(map$dependencies, list(plugin))
   map
 }
 
-# Initialize the map
+# Initialize the map; by default, it will zoom to the extent of all points 
+# in the parkStations data frame
+# The ParkTiles basemap is added by executing mapbox Javascript(wrapped in the addTiles function! 
+leaflet() %>% addTiles(urlTemplate = tileURL) %>% addAwesomeMarkers(lng=parkStations$Longitude_dd, lat=parkStations$Latitude_dd, icon=defaultMarker, label=parkStations$StationName)
 leaflet() %>% 
   #addTiles() %>%
   #setView(-120, 36, zoom = 7) %>%
@@ -82,7 +88,6 @@ leaflet() %>%
     function(el, x) {
 L.tileLayer('http://api.mapbox.com/v4/nps.397cfb9a,nps.3cf3d4ab,nps.b0add3e6/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibnBzIiwiYSI6IkdfeS1OY1UifQ.K8Qn5ojTw4RV1GwBlsci-Q&secure=1').addTo(this);
 }") %>% addAwesomeMarkers(lng=parkStations$Longitude_dd, lat=parkStations$Latitude_dd, icon=defaultMarker, label=parkStations$StationName)
-#%>% addMarkers(lng = parkStations$Longitude_dd, parkStations$Latitude_dd,
-# popup = parkStations$StationName) 
+ 
 
 
