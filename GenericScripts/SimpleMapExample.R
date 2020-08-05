@@ -1,8 +1,9 @@
 # Snippet for hydro station map
 
 # Check for packages (code structure from Lee McCoy - DM Training 2018)
-pkgList <- c("RODBC",
+pkgList <- c("odbc", #"RODBC"
              "dplyr",
+             "stringr",
              "rgdal",
              "jsonlite",
              "leaflet")  # leaflet 2.0.2+
@@ -19,16 +20,36 @@ lapply(pkgList, library, character.only = TRUE, quietly=TRUE) #load packages
 
 # Library initialization
 library(leaflet)
-library(RODBC)
+#library(RODBC)
+library(odbc)
+library(stringr)
 # If want AOA polygons:
 library(jsonlite)
 library(rgdal)
 
+# Functions
+getInfo <- function(msg="Enter the database instance, user name, and password separated by |: ") {
+  if (interactive() ) {
+    txt <- readline(msg)
+  } else {
+    cat(msg);
+    txt <- readLines("stdin",n=1);
+  }
+  return(txt)
+}
+
+
 # Variables
-dbInstance <- "INPNISCVDBNRSST\\IMDGIS"
+uInput=getInfo()
+print(uInput)
+
+dbInstance <- strsplit(uInput, "\\|")[[1]][1]
+dbUser <- strsplit(uInput, "\\|")[[1]][2]
+dbPwd <- strsplit(uInput, "\\|")[[1]][3]
+#dbSuffix <- stringr::str_glue(";uid={dbUser};pwd={dbPwd}")
 dbName <- "Hydro_Stage"
 dbTable <- "dbo.Station"
-connString <- paste0("driver={SQL Server};server=",dbInstance,";database=",dbName,";uid=Report_Data_Reader;pwd=ReportDataUser")
+
 unitSQL <- "select distinct UnitCode from dbo.Station order by UnitCode"
 stationSnippet <- "select distinct SiteNumber, StationName, Longitude_dd, Latitude_dd, UnitCode from dbo.Station order by UnitCode, StationName"
 
@@ -42,13 +63,20 @@ defaultMarker <- makeAwesomeIcon(
   markerColor = 'red' 
 )
 
-# Get the UnitCodes for stations
-dbConn <- odbcDriverConnect(connString)
 
-unitCodes <- sqlQuery(dbConn, unitSQL)
+# Get the UnitCodes for stations
+dbConn <- dbConnect(odbc(), Driver="ODBC Driver 13 for SQL Server", Server = dbInstance, Database = dbName, uid = dbUser, pwd = dbPwd, Port = 1433)#odbcDriverConnect(connString)
+
+unitCodeQuery <- dbSendQuery(dbConn, unitSQL)
+unitCodes <- dbFetch(unitCodesQuery)
+dbClearResult(unitCodesQuery)
 
 # Get station details
-stationInfo <- sqlQuery(dbConn, stationSnippet)
+stationInfoQuery <- dbSendQuery(dbConn, stationSnippet)
+stationInfo <- dbFetch(stationInfoQuery)
+dbClearResult(stationInfoQuery)
+
+dbDisconnect(dbConn)
 
 # Filter stations for selected park
 parkCode <- "ROMO"
@@ -58,9 +86,9 @@ parkStations <- stationInfo[which(stationInfo$UnitCode == parkCode), ]
 getAOAFeature <- function(unitCode, aoaExtent="km30") {
   tempOutput <- "temp.geojson"
   featureServiceURLs <-
-    list("park" = "https://irmaservices.nps.gov/arcgis/rest/services/LandscapeDynamics/LandscapeDynamics_AOA_WebMercator/FeatureServer/0",
-         "km3" = "https://irmaservices.nps.gov/arcgis/rest/services/LandscapeDynamics/LandscapeDynamics_AOA_WebMercator/FeatureServer/1",
-         "km30" = "https://irmaservices.nps.gov/arcgis/rest/services/LandscapeDynamics/LandscapeDynamics_AOA_WebMercator/FeatureServer/2"
+    list("park" = "https://irmaservices.nps.gov/arcgis/rest/services/LandscapeDynamics/LandscapeDynamics_AOA/FeatureServer/0",
+         "km3" = "https://irmaservices.nps.gov/arcgis/rest/services/LandscapeDynamics/LandscapeDynamics_AOA/FeatureServer/1",
+         "km30" = "https://irmaservices.nps.gov/arcgis/rest/services/LandscapeDynamics/LandscapeDynamics_AOA/FeatureServer/2"
     )
   featureServicePathInfo <- "query?where=UNIT_CODE+%3D+%27XXXX%27&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&distance=&units=esriSRUnit_Meter&relationParam=&outFields=*&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=4269&gdbVersion=&returnDistinctValues=false&returnIdsOnly=false&returnCountOnly=false&returnExtentOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&multipatchOption=&resultOffset=&resultRecordCount=&f=geojson"
   
